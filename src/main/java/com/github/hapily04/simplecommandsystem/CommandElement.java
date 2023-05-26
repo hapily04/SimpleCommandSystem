@@ -49,7 +49,7 @@ public abstract class CommandElement<T extends CommandSender> {
     public abstract void execute(T sender, String[] args);
 
     /**
-     * This method is abstract to encourage implementation by the user for better player experience when running the command.
+     * This method is abstract to encourage implementation by the user for better player experience when running the command. <br>
      * This is not an annotation to support any extra code the user wishes to run to get to the usage message (think minimessage)
      *
      * @return The usage message to provide to the player when the command is not run correctly
@@ -57,8 +57,8 @@ public abstract class CommandElement<T extends CommandSender> {
     public abstract @Nullable String getUsage();
 
     /**
-     * This method is required to encourage user readability.
-     * For base commands, the description implemented in the form of the bukkit /help command.
+     * This method is required to encourage user readability. <br>
+     * For base commands, the description implemented in the form of the bukkit /help command. <br>
      * For subcommands, it's hopeful that the description will be implemented in the developer's own help command for
      * the main base command.
      *
@@ -69,7 +69,7 @@ public abstract class CommandElement<T extends CommandSender> {
     }
 
     /**
-     * This method can be overridden to provide a permission message of your choice to the player running the command.
+     * This method can be overridden to provide a permission message of your choice to the player running the command. <br>
      * This is not an annotation to support any extra code the user wishes to run to get to the usage message (think minimessage)
      *
      * @return The permission message to provide to the player when they do not have permission to execute this command
