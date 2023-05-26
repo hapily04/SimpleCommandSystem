@@ -1,5 +1,5 @@
 # SimpleCommandSystem
-Create commands just a little more easily...
+Create commands just a little more easily... (Java 9+)
 
 # Features
 - SubCommands (with aliases handled & dedicated permission message handling)
