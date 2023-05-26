@@ -90,6 +90,7 @@ public class CmdSpawn extends CommandElement<Player> { // CommandElement<Player>
 @Name("Set")
 @Description("Sets the spawn-point of the world")
 @Permission("myplugin.spawn.set")
+@SubCommand(parent = CmdSpawn.class)
 public class SubSet extends CommandElement<Player> { // CommandElement<Player> because we only want players to execute the command
     
     @Override
