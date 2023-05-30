@@ -9,10 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 
 /**
@@ -114,12 +111,12 @@ public abstract class CommandElement<T extends CommandSender> {
      */
     public final @NotNull BukkitCommand asBukkitCommand() {
         // I don't believe String#toLowerCase is required, but it's here just in-case.
-        BukkitCommand command = new BukkitCommand(name.toLowerCase()) {
+        BukkitCommand command = new BukkitCommand(name.toLowerCase(Locale.ENGLISH)) {
             @Override
             public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
                 if (args.length > 0) {
                     for (CommandElement<?> subCommand : subCommands) {
-                        if (!getAllAliases(subCommand).contains(subCommand.name.toUpperCase())) continue;
+                        if (!getAllAliases(subCommand).contains(subCommand.name.toUpperCase(Locale.ENGLISH))) continue;
                         if (subCommand.permission == null || sender.hasPermission(subCommand.permission)) {
                             return subCommand.asBukkitCommand().execute(sender, args[0], Arrays.copyOfRange(args, 1, args.length));
                         }
@@ -144,11 +141,11 @@ public abstract class CommandElement<T extends CommandSender> {
              */
             private List<String> getAllAliases(CommandElement<?> subCommand) {
                 String[] aliases = subCommand.aliases;
-                if (aliases == null) return List.of(new String[]{subCommand.name});
+                if (aliases == null) return Collections.singletonList(subCommand.name);
                 List<String> allAliases = new ArrayList<>(aliases.length+1);
-                allAliases.add(subCommand.name.toUpperCase());
+                allAliases.add(subCommand.name.toUpperCase(Locale.ENGLISH));
                 for (String alias : aliases) {
-                    allAliases.add(alias.toUpperCase());
+                    allAliases.add(alias.toUpperCase(Locale.ENGLISH));
                 }
                 return allAliases;
             }

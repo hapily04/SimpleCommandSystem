@@ -50,7 +50,7 @@ public class SimpleCommandSystem {
         commandInstances.put(clazz, commandElement);
         Class<? extends CommandElement<?>> parent = commandElement.getParent();
         if (parent == null) {
-            commandMap.register(label.toLowerCase(), commandElement.asBukkitCommand());
+            commandMap.register(label.toLowerCase(Locale.ENGLISH), commandElement.asBukkitCommand());
             return commandElement;
         }
         if (commandInstances.containsKey(parent)) {
@@ -69,8 +69,8 @@ public class SimpleCommandSystem {
         List<Class<? extends T>> classes = new ArrayList<>();
         pkg = pkg.replace('.', '/');
         try (JarFile file = new JarFile(jar)) {
-            for (Iterator<JarEntry> it = file.entries().asIterator(); it.hasNext();) {
-                JarEntry jarEntry = it.next();
+            for (Enumeration<JarEntry> enu = file.entries(); enu.hasMoreElements();) {
+                JarEntry jarEntry = enu.nextElement();
                 String path = jarEntry.getName();
                 if (!jarEntry.isDirectory() && path.startsWith(pkg) && path.endsWith(".class")) {
                     path = path.substring(0, path.length()-6); // 6 is the length of the ".class" string
