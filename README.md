@@ -4,6 +4,7 @@ Create commands just a little more easily... (Java 9+)
 # Features
 - SubCommands (with aliases handled & dedicated permission message handling)
 - Easier command executor handling
+- Tab completions registered automatically for all subcommands (and optionally their aliases)
 - Well documented
 - Easier registration (it's pretty much all done for you)
 ```java
@@ -91,6 +92,7 @@ public class CmdSpawn extends CommandElement<Player> { // CommandElement<Player>
 @Description("Sets the spawn-point of the world")
 @Permission("myplugin.spawn.set")
 @SubCommand(parent = CmdSpawn.class)
+@Aliases(value = "sethere", registerAsTabCompletions = true)
 public class SubSet extends CommandElement<Player> { // CommandElement<Player> because we only want players to execute the command
     
     @Override
