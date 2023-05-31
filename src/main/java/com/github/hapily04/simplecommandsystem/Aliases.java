@@ -4,6 +4,7 @@ import java.lang.annotation.*;
 
 /**
  * Provides the list of aliases to be detected for the command <br>
+ * Also tells the tab completions registrar if the aliases should be added to the completions list <br>
  * OPTIONAL
  */
 @Retention(RetentionPolicy.RUNTIME)
@@ -12,5 +13,6 @@ import java.lang.annotation.*;
 public @interface Aliases {
 
     String[] value();
+    boolean registerAsTabCompletions() default false;
 
 }

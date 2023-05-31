@@ -22,18 +22,24 @@ public abstract class CommandElement<T extends CommandSender> {
     private final String name;
     private final String description;
     private final String @Nullable [] aliases;
+    private final boolean registerAliasCompletions;
     private final @Nullable String permission;
     private final @Nullable Class<? extends CommandElement<?>> parent;
+
+    private final List<List<String>> tabCompletions;
 
     private final List<CommandElement<?>> subCommands;
 
     public CommandElement() {
         this.name = getOptional(Name.class).orElseThrow(() -> new NullPointerException("The name annotation is required to register a command.")).value();
         this.description = getOptional(Description.class).orElseThrow(() -> new NullPointerException("The description annotation is required to register a command.")).value();
-        this.aliases = getOptional(Aliases.class).map(Aliases::value).orElse(null);
+        Optional<Aliases> aliases = getOptional(Aliases.class);
+        this.aliases = aliases.map(Aliases::value).orElse(null);
+        registerAliasCompletions = aliases.map(Aliases::registerAsTabCompletions).orElse(false);
         this.permission = getOptional(Permission.class).map(Permission::value).orElse(null);
         this.parent = getOptional(SubCommand.class).map(SubCommand::parent).orElse(null);
         this.subCommands = new ArrayList<>();
+        tabCompletions = new ArrayList<>();
     }
 
     /**
@@ -77,7 +83,7 @@ public abstract class CommandElement<T extends CommandSender> {
 
     /**
      * The parent class of this command element. Primarily used by subcommands to indicate to
-     * {@link com.github.hapily04.simplecommandsystem.SimpleCommandSystem#registerCommands(JavaPlugin, CommandMap, String)}
+     * {@link SimpleCommandSystem#registerCommands(JavaPlugin, CommandMap, String)}
      * what element this class belongs to. It also helps with subcommand nesting if that's what the user desires.
      *
      * @return The parent command element that this class belongs to
@@ -88,7 +94,7 @@ public abstract class CommandElement<T extends CommandSender> {
 
     /**
      * This method is typically used internally with
-     * {@link com.github.hapily04.simplecommandsystem.SimpleCommandSystem#registerCommands(JavaPlugin, CommandMap, String)}
+     * {@link SimpleCommandSystem#registerCommands(JavaPlugin, CommandMap, String)}
      * but is left open in-case the user wants to write their own register methods.
      *
      * @param commandElement The subcommand to add to this command element's subcommand list
@@ -112,11 +118,12 @@ public abstract class CommandElement<T extends CommandSender> {
     public final @NotNull BukkitCommand asBukkitCommand() {
         // I don't believe String#toLowerCase is required, but it's here just in-case.
         BukkitCommand command = new BukkitCommand(name.toLowerCase(Locale.ENGLISH)) {
+
             @Override
             public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
                 if (args.length > 0) {
                     for (CommandElement<?> subCommand : subCommands) {
-                        if (!getAllAliases(subCommand).contains(subCommand.name.toUpperCase(Locale.ENGLISH))) continue;
+                        if (!getAllAliases(subCommand).contains(args[0].toLowerCase(Locale.ENGLISH))) continue;
                         if (subCommand.permission == null || sender.hasPermission(subCommand.permission)) {
                             return subCommand.asBukkitCommand().execute(sender, args[0], Arrays.copyOfRange(args, 1, args.length));
                         }
@@ -133,22 +140,13 @@ public abstract class CommandElement<T extends CommandSender> {
                 return true;
             }
 
-            /**
-             * Used in the execute method of the BukkitCommand to determine if the subcommand needs to be run or not
-             *
-             * @param subCommand The subcommand to query and combine aliases and the name of the subcommand in uppercase
-             * @return List of aliases and the name of the subcommand in uppercase
-             */
-            private List<String> getAllAliases(CommandElement<?> subCommand) {
-                String[] aliases = subCommand.aliases;
-                if (aliases == null) return Collections.singletonList(subCommand.name);
-                List<String> allAliases = new ArrayList<>(aliases.length+1);
-                allAliases.add(subCommand.name.toUpperCase(Locale.ENGLISH));
-                for (String alias : aliases) {
-                    allAliases.add(alias.toUpperCase(Locale.ENGLISH));
-                }
-                return allAliases;
+            @Override
+            public @NotNull List<String> tabComplete(@NotNull CommandSender sender, @NotNull String alias, @NotNull String[] args) {
+                int index = args.length-1;
+                if (args.length > tabCompletions.size()) return new ArrayList<>();
+                return tabCompletions.get(index);
             }
+
         };
         command.setPermission(permission);
         command.setPermissionMessage(getPermissionMessage());
@@ -157,6 +155,49 @@ public abstract class CommandElement<T extends CommandSender> {
             command.setAliases(Arrays.asList(aliases));
         }
         return command;
+    }
+
+    /**
+     * Goes through the command tree for the base command & registers their subcommand names as tab completions
+     * and optionally their aliases. See {@link Aliases#registerAsTabCompletions()} <br>
+     * See {@link CommandElement#addSubCommand(CommandElement)} for why this is made public.
+     */
+    public final void registerTabCompletions() {
+        getCompletions(0, tabCompletions, subCommands);
+    }
+
+    /**
+     * Used in the execute method of the BukkitCommand to determine if the subcommand needs to be run or not <br>
+     * Also used to register tab completions
+     *
+     * @param subCommand The subcommand to query and combine aliases and the name of the subcommand in uppercase
+     * @return List of aliases and the name of the subcommand in lowercase
+     */
+    private List<String> getAllAliases(CommandElement<?> subCommand) {
+        String[] aliases = subCommand.aliases;
+        if (aliases == null) return Collections.singletonList(subCommand.name.toLowerCase(Locale.ENGLISH));
+        List<String> allAliases = new ArrayList<>(aliases.length+1);
+        allAliases.add(subCommand.name.toLowerCase(Locale.ENGLISH));
+        for (String alias : aliases) {
+            allAliases.add(alias.toLowerCase(Locale.ENGLISH));
+        }
+        return allAliases;
+    }
+
+    private void getCompletions(int currentIndex, List<List<String>> completions, List<CommandElement<?>> subCommands) {
+        List<String> completionsList = new ArrayList<>();
+        completions.add(completionsList);
+        List<CommandElement<?>> newSubCommands = new ArrayList<>();
+        for (CommandElement<?> subCommand : subCommands) {
+            newSubCommands.addAll(subCommand.subCommands);
+            if (subCommand.registerAliasCompletions) {
+                completionsList.addAll(getAllAliases(subCommand));
+                continue;
+            }
+            completionsList.add(subCommand.name.toLowerCase(Locale.ENGLISH));
+        }
+        if (newSubCommands.isEmpty()) return;
+        getCompletions(currentIndex+1, completions, newSubCommands);
     }
 
     private <A extends Annotation> Optional<A> getOptional(Class<A> annotationClass) {

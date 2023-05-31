@@ -32,9 +32,13 @@ public class SimpleCommandSystem {
             Class<? extends CommandElement<?>>[] classes = getClasses(pkg,
                     CommandElement.class, jar);
             Map<Class<? extends CommandElement<?>>, CommandElement<?>> commandInstances = new HashMap<>(classes.length);
+            List<CommandElement<?>> baseCommands = new ArrayList<>();
             for (Class<? extends CommandElement<?>> clazz : classes) {
                 if (Modifier.isAbstract(clazz.getModifiers())) continue;
-                registerCommand(clazz, commandInstances, commandMap, plugin.getName());
+                registerCommand(baseCommands, clazz, commandInstances, commandMap, plugin.getName());
+            }
+            for (CommandElement<?> baseCommand : baseCommands) {
+                baseCommand.registerTabCompletions();
             }
         } catch (IOException | ClassNotFoundException | NoSuchMethodException | InstantiationException |
                  IllegalAccessException | InvocationTargetException e) {
@@ -42,7 +46,7 @@ public class SimpleCommandSystem {
         }
     }
 
-    private static CommandElement<?> registerCommand(Class<? extends CommandElement<?>> clazz,
+    private static CommandElement<?> registerCommand(List<CommandElement<?>> baseCommands, Class<? extends CommandElement<?>> clazz,
                                                      Map<Class<? extends CommandElement<?>>, CommandElement<?>> commandInstances,
                                                      CommandMap commandMap, String label)
             throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
@@ -50,6 +54,7 @@ public class SimpleCommandSystem {
         commandInstances.put(clazz, commandElement);
         Class<? extends CommandElement<?>> parent = commandElement.getParent();
         if (parent == null) {
+            baseCommands.add(commandElement);
             commandMap.register(label.toLowerCase(Locale.ENGLISH), commandElement.asBukkitCommand());
             return commandElement;
         }
@@ -57,7 +62,7 @@ public class SimpleCommandSystem {
             commandInstances.get(parent).addSubCommand(commandElement);
             return commandElement;
         }
-        CommandElement<?> parentElement = registerCommand(parent, commandInstances, commandMap, label);
+        CommandElement<?> parentElement = registerCommand(baseCommands, parent, commandInstances, commandMap, label);
         parentElement.addSubCommand(commandElement);
         return commandElement;
     }
