@@ -26,7 +26,7 @@ public class SimpleCommandSystem {
      */
     public static void registerCommands(JavaPlugin plugin, CommandMap commandMap, String pkg) {
         try {
-            Method fileMethod = plugin.getClass().getDeclaredMethod("getFile");
+            Method fileMethod = getMethod(plugin.getClass(), "getFile");
             fileMethod.setAccessible(true);
             File jar = (File) fileMethod.invoke(plugin);
             Class<? extends CommandElement<?>>[] classes = getClasses(pkg,
@@ -88,6 +88,17 @@ public class SimpleCommandSystem {
             }
         }
         return (Class<? extends T>[]) classes.toArray(new Class<?>[0]);
+    }
+
+    private static Method getMethod(Class<?> clazz, String name) throws NoSuchMethodException {
+        try {
+            return clazz.getDeclaredMethod(name);
+        } catch (NoSuchMethodException e) {
+            if (clazz == Object.class) {
+                throw e;
+            }
+            return getMethod(clazz.getSuperclass(), name);
+        }
     }
 
 }
