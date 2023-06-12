@@ -34,7 +34,7 @@ SimpleCommandSystem.registerCommands(this, Bukkit.getCommandMap(), "com.github.h
 	<dependency>
 	    <groupId>com.github.hapily04</groupId>
 	    <artifactId>SimpleCommandSystem</artifactId>
-	    <version>1.0</version>
+	    <version>1.2</version>
 	</dependency>
 ```
 ### Gradle
