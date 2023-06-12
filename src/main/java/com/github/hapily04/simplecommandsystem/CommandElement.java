@@ -19,8 +19,8 @@ import java.util.*;
  */
 public abstract class CommandElement<T extends CommandSender> {
 
-    private final String name;
-    private final String description;
+    private final @NotNull String name;
+    private final @NotNull String description;
     private final String @Nullable [] aliases;
     private final boolean registerAliasCompletions;
     private final @Nullable String permission;
@@ -99,7 +99,7 @@ public abstract class CommandElement<T extends CommandSender> {
      *
      * @param commandElement The subcommand to add to this command element's subcommand list
      */
-    public final void addSubCommand(CommandElement<?> commandElement) {
+    public final void addSubCommand(@NotNull CommandElement<?> commandElement) {
         subCommands.add(commandElement);
     }
 
@@ -133,8 +133,7 @@ public abstract class CommandElement<T extends CommandSender> {
                 }
                 if (getExecutableBy().isInstance(sender)) {
                     CommandElement.this.execute(getExecutableBy().cast(sender), args);
-                }
-                else {
+                } else {
                     sender.sendMessage(ChatColor.RED + "You are not able to run this command.");
                 }
                 return true;
@@ -173,7 +172,7 @@ public abstract class CommandElement<T extends CommandSender> {
      * @param subCommand The subcommand to query and combine aliases and the name of the subcommand in uppercase
      * @return List of aliases and the name of the subcommand in lowercase
      */
-    private List<String> getAllAliases(CommandElement<?> subCommand) {
+    private @NotNull List<String> getAllAliases(@NotNull CommandElement<?> subCommand) {
         String[] aliases = subCommand.aliases;
         if (aliases == null) return Collections.singletonList(subCommand.name.toLowerCase(Locale.ENGLISH));
         List<String> allAliases = new ArrayList<>(aliases.length+1);
@@ -184,7 +183,7 @@ public abstract class CommandElement<T extends CommandSender> {
         return allAliases;
     }
 
-    private void getCompletions(int currentIndex, List<List<String>> completions, List<CommandElement<?>> subCommands) {
+    private void getCompletions(int currentIndex, @NotNull List<List<String>> completions, @NotNull List<CommandElement<?>> subCommands) {
         List<String> completionsList = new ArrayList<>();
         completions.add(completionsList);
         List<CommandElement<?>> newSubCommands = new ArrayList<>();
@@ -200,7 +199,7 @@ public abstract class CommandElement<T extends CommandSender> {
         getCompletions(currentIndex+1, completions, newSubCommands);
     }
 
-    private <A extends Annotation> Optional<A> getOptional(Class<A> annotationClass) {
+    private @NotNull <A extends Annotation> Optional<A> getOptional(Class<A> annotationClass) {
         return Optional.ofNullable(getClass().getAnnotation(annotationClass));
     }
 
